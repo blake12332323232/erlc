@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard - Old + New Tracker</title>
+<style>
+:root {
+    --primary-blue: #007AFF;
+    --bg-gray: #F2F2F7;
+    --card-white: #ffffff;
+    --text-dark: #1C1C1E;
+    --text-gray: #8E8E93;
+    --green: #34C759;
+    --red: #FF3B30;
+    --yellow: #FFD60A;
+    --team-police: #007AFF;
+    --team-fire: #FF3B30;
+    --team-civilian: #34C759;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-gray);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+/* Card style */
+.card {
+    background: var(--card-white);
+    width: 90%;
+    max-width: 800px;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    text-align: center;
+    margin-bottom: 20px;
+    transition: transform 0.2s ease;
+}
+.card:hover { transform: translateY(-2px); }
+
+h1 { margin-bottom: 20px; color: var(--text-dark); font-weight: 600; }
+input, select {
+    width: 80%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    outline: none;
+}
+input:focus, select:focus { border-color: var(--primary-blue); box-shadow: 0 0 5px var(--primary-blue); }
+
+button {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 5px;
+}
+button:hover { background-color: #005BBB; transform: translateY(-1px); }
+button:active { opacity: 0.8; transform: translateY(0); }
+.error { color: var(--red); margin-top: 10px; font-weight: 500; }
+
+/* Dashboard stats grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.stat-card {
+    background: var(--bg-gray);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card h2 { margin:0; font-size:1.8rem; font-weight:700; color: var(--text-dark); }
+.stat-card p { margin:0; font-size:0.9rem; color: var(--text-gray); }
+
+/* Old tracker style */
+.old-tracker {
+    margin-top: 20px;
+    border: 2px solid var(--primary-blue);
+    border-radius: 20px;
+    padding: 20px;
+    background: white;
+}
+.old-tracker h3 { margin-bottom:10px; color: var(--primary-blue);}
+.count-circle {
+    width: 120px;
+    height: 120px;
+    border: 6px solid var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px;
+}
+.count-circle .number { font-size:2rem; font-weight:800; color: var(--text-dark);}
+.count-circle .label { color: var(--text-gray); font-size:0.9rem; }
+
+/* Player lists */
+#playerPreview, #playerList, #actionLog { text-align: left; padding-left:0; list-style:none; max-height:250px; overflow-y:auto; margin-top:10px; }
+#playerPreview li, #playerList li { margin-bottom:6px; cursor:pointer; padding:5px; border-radius:8px; transition: all 0.2s; }
+#playerPreview li:hover, #playerList li:hover { background-color: var(--primary-blue); color:white; }
+
+#actionLog li { padding:5px 0; border-bottom:1px solid #eee; font-size:0.9rem; }
+</style>
+</head>
+<body>
+
+<!-- Staff Login -->
+<div class="card" id="loginCard">
+    <h1>Staff Login</h1>
+    <input type="password" id="accessCode" placeholder="Enter access code">
+    <br>
+    <button onclick="checkCode()">Login</button>
+    <div class="error" id="errorMsg"></div>
+</div>
+
+<!-- Dashboard -->
+<div class="card" id="dashboardCard" style="display:none;">
+    <h1>Staff Dashboard</h1>
+
+    <!-- New sleek dashboard -->
+    <div class="stats-grid">
+        <div class="stat-card"><h2 id="activePlayers">--</h2><p>Active Players</p></div>
+        <div class="stat-card"><h2 id="maxPlayers">--</h2><p>Max Players</p></div>
+    </div>
+
+    <!-- Old tracker -->
+    <div class="old-tracker">
+        <h3>Old Active Member Tracker</h3>
+        <div class="count-circle">
+            <div class="number" id="oldPlayerCount">--</div>
+            <div class="label">PLAYERS</div>
+        </div>
+        <ul id="oldPlayerPreview"></ul>
+    </div>
+
+    <!-- Infraction system -->
+    <h3>Issue Infraction</h3>
+    <select id="selectedMember">
+        <option value="">Select a member</option>
+    </select>
+    <br>
+    <button onclick="issueInfraction('Warn')">Warn</button>
+    <button onclick="issueInfraction('Kick')">Kick</button>
+    <button onclick="issueInfraction('Ban')">Ban</button>
+    <button onclick="issueInfraction('Bolo')">Bolo</button>
+
+    <button onclick="toggleActionLog()">View Action Logs</button>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<!-- Full Player List -->
+<div class="card" id="playerListSection" style="display:none;">
+    <h1>Active Members</h1>
+    <input type="text" id="playerSearch" placeholder="Search player..." onkeyup="filterPlayers()">
+    <ul id="playerList"><li>Loading...</li></ul>
+    <button onclick="hidePlayerList()">Back to Dashboard</button>
+</div>
+
+<!-- Action Log -->
+<div class="card" id="actionLogSection" style="display:none;">
+    <h1>Action Logs</h1>
+    <ul id="actionLog"></ul>
+    <button onclick="hideActionLog()">Back to Dashboard</button>
+</div>
+
+<script>
+const correctCode = "pCk21G";
+const API_KEY = "EDDWtdxdqpkBgXETYTuW-AoNQALiSbkgCjoRweBqzKzyFMcyjZRQrJQUmNEfV";
+const PLAYERS_URL = "https://api.policeroleplay.community/v1/server/players";
+let players = [];
+
+// Login
+function checkCode(){
+    const input = document.getElementById('accessCode').value;
+    if(input===correctCode){
+        document.getElementById('loginCard').style.display="none";
+        document.getElementById('dashboardCard').style.display="block";
+        fetchPlayers();
+        setInterval(fetchPlayers,10000);
+    } else {
+        document.getElementById('errorMsg').textContent="Incorrect code!";
+    }
+}
+
+function logout(){
+    document.getElementById('loginCard').style.display="block";
+    document.getElementById('dashboardCard').style.display="none";
+    document.getElementById('playerListSection').style.display="none";
+    document.getElementById('actionLogSection').style.display="none";
+}
+
+// Fetch live players
+async function fetchPlayers(){
+    try{
+        const res = await fetch(PLAYERS_URL, { headers: { "Server-Key": API_KEY }});
+        const data = await res.json();
+        players = Array.isArray(data) ? data : [];
+        updateDashboard();
+    } catch(e){ console.error("Error fetching players:", e); players = []; updateDashboard();}
+}
+
+function updateDashboard(){
+    // New tracker
+    document.getElementById('activePlayers').innerText = players.length;
+    document.getElementById('maxPlayers').innerText = 40;
+
+    // Old tracker
+    document.getElementById('oldPlayerCount').innerText = players.length;
+    const oldPreview = document.getElementById('oldPlayerPreview');
+    oldPreview.innerHTML="";
+    
+    const select = document.getElementById('selectedMember');
+    select.innerHTML='<option value="">Select a member</option>';
+
+    players.forEach(p=>{
+        // Old preview
+        const liOld = document.createElement('li');
+        liOld.textContent = p.Player;
+        liOld.onclick = ()=>{ window.open(`https://www.roblox.com/users/${p.RobloxId}/profile`, "_blank"); }
+        oldPreview.appendChild(liOld);
+
+        // Dropdown for infractions
+        const opt = document.createElement('option');
+        opt.value = p.Player;
+        opt.textContent = p.Player;
+        select.appendChild(opt);
+    });
+
+    // Full list if open
+    const listEl = document.getElementById('playerList');
+    if(listEl.style.display!=="none"){
+        listEl.innerHTML="";
+        players.forEach(p=>{
+            const li = document.createElement('li');
+            li.textContent = p.Player;
+            li.onclick=()=>{ window.open(`https://www.roblox.com/users/${p.RobloxId}/profile`, "_blank"); }
+            listEl.appendChild(li);
+        });
+    }
+}
+
+function togglePlayerList(){ document.getElementById('dashboardCard').style.display="none"; document.getElementById('playerListSection').style.display="block"; }
+function hidePlayerList(){ document.getElementById('playerListSection').style.display="none"; document.getElementById('dashboardCard').style.display="block"; }
+
+function filterPlayers(){
+    const filter = document.getElementById('playerSearch').value.toLowerCase();
+    const items = document.getElementById('playerList').getElementsByTagName('li');
+    for(let i=0;i<items.length;i++){ items[i].style.display = items[i].innerText.toLowerCase().includes(filter)?"block":"none"; }
+}
+
+function toggleActionLog(){ document.getElementById('dashboardCard').style.display="none"; document.getElementById('actionLogSection').style.display="block"; }
+function hideActionLog(){ document.getElementById('actionLogSection').style.display="none"; document.getElementById('dashboardCard').style.display="block"; }
+
+function issueInfraction(type){
+    const memberName = document.getElementById('selectedMember').value;
+    if(!memberName){ alert("Select a member first!"); return; }
+    const log = document.getElementById('actionLog');
+    const li = document.createElement('li');
+    const timestamp = new Date().toLocaleTimeString();
+    li.textContent=`[${timestamp}] ${type} -> ${memberName}`;
+    log.insertBefore(li, log.firstChild);
+    alert(`${type} issued to ${memberName}`);
+}
+</script>
+</body>
+</html>
